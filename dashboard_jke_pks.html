@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>JKE PKS Course Registration Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#F1F5F9;color:#0F172A;font-size:14px;line-height:1.6}
+a{color:#2563EB}
+
+/* HEADER */
+.header{background:#0F172A;color:#fff;padding:18px 28px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #1e293b}
+.header-logo{background:#2563EB;border-radius:8px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.header-logo svg{width:22px;height:22px;fill:#fff}
+.header-title h1{font-size:18px;font-weight:800;color:#fff;letter-spacing:-0.02em}
+.header-title p{font-size:12px;color:#94A3B8;margin-top:1px;font-weight:400}
+.header-right{margin-left:auto;font-size:12px;color:#94A3B8;text-align:right}
+.sesi-badge{background:#2563EB;color:#fff;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.04em}
+
+/* LAYOUT */
+.page-body{display:flex;min-height:calc(100vh - 76px)}
+.sidebar{width:230px;background:#0F172A;flex-shrink:0;display:flex;flex-direction:column;padding:20px 0 16px;border-right:1px solid #1e293b}
+.sidebar-brand{padding:0 18px 16px;border-bottom:1px solid #1e293b;margin-bottom:12px}
+.sidebar-brand-name{font-size:13px;font-weight:700;color:#F8FAFC;letter-spacing:-0.01em}
+.sidebar-brand-sub{font-size:11px;color:#64748B;margin-top:2px}
+.sidebar-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#334155;padding:0 18px 6px;margin-top:4px}
+.sidebar .tab{display:flex;align-items:center;gap:8px;padding:9px 18px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#64748B;cursor:pointer;border-left:3px solid transparent;border-bottom:none;margin:0;white-space:nowrap;background:none;transition:color .15s,background .15s}
+.sidebar .tab:hover{color:#CBD5E1;background:rgba(255,255,255,0.04)}
+.sidebar .tab.active{color:#F8FAFC;background:rgba(37,99,235,0.15);border-left-color:#2563EB}
+.sidebar-divider{height:1px;background:#1e293b;margin:10px 14px}
+.main-area{flex:1;min-width:0;padding:24px 28px;overflow-x:auto}
+
+/* FILTER BAR */
+.filter-bar{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.filter-group{display:flex;flex-direction:column;gap:4px}
+.filter-group label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#0F172A}
+.filter-group select{border:1px solid #CBD5E1;border-radius:6px;padding:7px 10px;font-size:13px;font-family:'Inter',system-ui,sans-serif;background:#fff;color:#0F172A;cursor:pointer;min-width:140px}
+.filter-group select:focus{outline:none;border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+.btn-reset{padding:7px 16px;border:1px solid #CBD5E1;border-radius:6px;background:#fff;color:#64748B;font-size:11px;font-family:'Inter',system-ui,sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;margin-top:auto}
+.btn-reset:hover{background:#F8FAFC;border-color:#94A3B8}
+.btn-upload{padding:7px 14px;border:1px solid #2563EB;border-radius:6px;background:#EFF6FF;color:#2563EB;font-size:12px;font-family:'Inter',system-ui,sans-serif;font-weight:600;cursor:pointer;margin-top:auto;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-upload:hover{background:#DBEAFE}
+.btn-download-tpl{padding:7px 14px;border:1px solid #CBD5E1;border-radius:6px;background:#fff;color:#64748B;font-size:12px;font-family:'Inter',system-ui,sans-serif;font-weight:500;cursor:pointer;margin-top:auto;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-download-tpl:hover{background:#F8FAFC}
+.btn-export{padding:7px 14px;border:1px solid #7C3AED;border-radius:6px;background:#F5F3FF;color:#7C3AED;font-size:12px;font-family:'Inter',system-ui,sans-serif;font-weight:600;cursor:pointer;margin-top:auto;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-export:hover{background:#EDE9FE}
+.upload-status{font-size:12px;color:#16a34a;margin-top:auto;display:none;font-weight:500}
+.upload-status.error{color:#DC2626}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:12px;width:min(720px,95vw);max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.modal-head{padding:18px 22px;border-bottom:1px solid #e5e7eb;display:flex;align-items:flex-start;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+.modal-head h2{font-size:15px;font-weight:700;color:#1f2328}
+.modal-head p{font-size:12px;color:#57606a;margin-top:2px}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#57606a;padding:0 4px;line-height:1}
+.modal-close:hover{color:#1f2328}
+.modal-body{padding:20px 22px}
+.modal-section{margin-bottom:20px}
+.modal-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#57606a;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.course-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;margin:3px}
+.pill-lulus{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.pill-bd{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}
+.pill-mk1{background:#fef9c3;color:#a16207;border:1px solid #fde68a}
+.pill-mk2{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.pill-ctce{background:#f5f3ff;color:#7c5cd8;border:1px solid #ddd6fe}
+.pill-sem{background:#f7f8fa;color:#57606a;border:1px solid #e5e7eb}
+.reg-table{width:100%;border-collapse:collapse;margin-top:6px}
+.reg-table th{background:#f7f8fa;padding:7px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#57606a;border-bottom:1px solid #e5e7eb}
+.reg-table td{padding:7px 12px;border-bottom:1px solid #f3f4f6;font-size:12px;vertical-align:middle}
+.reg-table tr:last-child td{border-bottom:none}
+.no-course{font-size:12px;color:#9ca3af;font-style:italic;padding:6px 0}
+
+/* KELAS ANALYSIS TAB */
+.kelas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.kelas-card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color .15s}
+.kelas-card:hover{border-color:#3b82d4}
+.kelas-card h4{font-size:13px;font-weight:600;margin-bottom:8px;color:#1f2328}
+.kelas-stat-row{display:flex;justify-content:space-between;font-size:12px;color:#57606a;padding:2px 0}
+.kelas-stat-row .val{font-weight:600}
+
+/* LOCALSTORAGE TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#1f2328;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:2000;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* TABS — overridden by sidebar styles above */
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* SUMMARY CARDS */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04)}
+.card-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.card-icon svg{width:20px;height:20px}
+.ci-blue{background:#EFF6FF}.ci-blue svg{stroke:#2563EB;fill:none}
+.ci-red{background:#FEF2F2}.ci-red svg{stroke:#EF4444;fill:none}
+.ci-amber{background:#FFFBEB}.ci-amber svg{stroke:#F59E0B;fill:none}
+.ci-purple{background:#F5F3FF}.ci-purple svg{stroke:#7C3AED;fill:none}
+.card-value{font-size:32px;font-weight:800;color:#0F172A;line-height:1;letter-spacing:-0.02em}
+.card-label{font-size:13px;font-weight:500;color:#64748B;margin-top:4px}
+.card-sub{font-size:11px;color:#94A3B8;margin-top:6px}
+
+/* SECTION */
+.section-title{font-size:13px;font-weight:700;color:#0F172A;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-title span{font-size:11px;font-weight:400;color:#64748B;font-style:normal}
+
+/* TABLE */
+.table-wrap{background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.table-header{padding:14px 18px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between}
+.table-header h3{font-size:13px;font-weight:700;color:#0F172A;letter-spacing:-0.01em}
+.search-box{border:1px solid #CBD5E1;border-radius:6px;padding:6px 10px;font-size:13px;font-family:'Inter',system-ui,sans-serif;width:220px}
+.search-box:focus{outline:none;border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+table{width:100%;border-collapse:collapse}
+th{background:#F8FAFC;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748B;border-bottom:1px solid #E2E8F0;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #F1F5F9;font-size:13px;vertical-align:middle;color:#1E293B}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F8FAFC}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;letter-spacing:0.02em}
+.b-l{background:#F0FDF4;color:#16A34A}
+.b-bd{background:#FFF7ED;color:#EA580C}
+.b-mk1{background:#FEFCE8;color:#A16207}
+.b-mk2{background:#FEF2F2;color:#DC2626}
+.b-ctce{background:#F5F3FF;color:#7C3AED}
+.b-2024{background:#EFF6FF;color:#2563EB}
+.b-2019{background:#F0FDF4;color:#16A34A}
+.risk-high{color:#DC2626;font-weight:700}
+.risk-med{color:#D97706;font-weight:600}
+.risk-ok{color:#16A34A;font-weight:500}
+.num-col{text-align:right}
+.sort-btn{background:none;border:none;cursor:pointer;color:#64748B;font-size:11px;margin-left:4px}
+
+/* CHART */
+.chart-wrap{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:22px;margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.chart-title{font-size:13px;font-weight:700;color:#0F172A;margin-bottom:16px;letter-spacing:-0.01em}
+.chart-legend{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#64748B;font-weight:500}
+.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.l-bd{background:#F97316}
+.l-mk1{background:#EAB308}
+.l-mk2{background:#EF4444}
+svg.bar-chart{width:100%;overflow:visible}
+.bar-chart text{font-family:'Inter',system-ui,sans-serif}
+.no-data{color:#94A3B8;font-size:13px;text-align:center;padding:28px;font-weight:500}
+
+/* COHORT COMPARE */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.compare-card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.compare-card h3{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;letter-spacing:-0.01em}
+.cohort-stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:13px}
+.cohort-stat:last-child{border-bottom:none}
+.cohort-stat .val{font-weight:700;color:#0F172A}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-top:1px solid #E2E8F0;font-size:12px;color:#64748B;font-weight:500}
+.pag-btns{display:flex;gap:6px}
+.pag-btn{border:1px solid #CBD5E1;background:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-family:'Inter',system-ui,sans-serif;font-weight:500}
+.pag-btn:hover{background:#F8FAFC}
+.pag-btn.active{background:#2563EB;border-color:#2563EB;color:#fff;font-weight:600}
+
+/* FOOTER */
+footer{text-align:center;font-size:12px;color:#94A3B8;border-top:1px solid #E2E8F0;padding:18px;margin-top:8px;font-weight:400}
+
+@media(max-width:900px){
+  .page-body{flex-direction:column}
+  .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;padding:8px 12px;gap:2px}
+  .sidebar .tab{border-left:none;border-bottom:3px solid transparent;padding:8px 14px;font-size:11px}
+  .sidebar .tab.active{border-bottom-color:#2563EB;border-left:none;background:rgba(37,99,235,0.15)}
+  .sidebar-brand,.sidebar-label,.sidebar-divider{display:none}
+  .main-area{padding:16px}
+}
+@media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}.compare-grid{grid-template-columns:1fr}.filter-bar{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24"><path d="M12 3L2 8l10 5 10-5-10-5zM2 13l10 5 10-5M2 18l10 5 10-5"/></svg>
+  </div>
+  <div class="header-title">
+    <h1>JKE PKS Course Registration Dashboard</h1>
+    <p>Jabatan Kejuruteraan Elektrik — Diploma in Electrical Engineering (DEE)</p>
+  </div>
+  <div class="header-right">
+    <div class="sesi-badge">Sesi I: 2026/2027</div>
+    <div style="margin-top:5px">Last updated: Nov 2026</div>
+  </div>
+</div>
+
+<div class="page-body">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-name">JKE PKS Dashboard</div>
+    <div class="sidebar-brand-sub">Pendaftaran Kursus DEE</div>
+  </div>
+  <div class="sidebar-label">Navigation</div>
+  <div class="tab active" onclick="showTab('overview')">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Overview
+  </div>
+  <div class="tab" onclick="showTab('courses')">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Course Analysis
+  </div>
+  <div class="tab" onclick="showTab('students')">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Student Analysis
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-label">Reports</div>
+  <div class="tab" onclick="showTab('cohort')">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Cohort Comparison
+  </div>
+  <div class="tab" onclick="showTab('kelas')">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Kelas Analysis
+  </div>
+</nav>
+
+<!-- MAIN AREA -->
+<div class="main-area">
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>Cohort / Intake</label>
+      <select id="filterCohort" onchange="applyFilters()">
+        <option value="all">All Cohorts</option>
+        <option value="2024">Cohort 2024</option>
+        <option value="2019">Cohort 2019</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Semester</label>
+      <select id="filterSem" onchange="applyFilters()">
+        <option value="all">All Semesters</option>
+        <option value="SEM 1">Semester 1</option>
+        <option value="SEM 2">Semester 2</option>
+        <option value="SEM 3">Semester 3</option>
+        <option value="SEM 4">Semester 4</option>
+        <option value="SEM 5">Semester 5</option>
+        <option value="SEM 6">Semester 6</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Class</label>
+      <select id="filterClass" onchange="applyFilters()">
+        <option value="all">All Classes</option>
+        <option value="DEE 2A">DEE 2A</option>
+        <option value="DEE 3A">DEE 3A</option>
+        <option value="DEE 3B">DEE 3B</option>
+        <option value="DEE 3C">DEE 3C</option>
+        <option value="DEE 3D">DEE 3D</option>
+        <option value="DEE 4A">DEE 4A</option>
+        <option value="DEE 4B">DEE 4B</option>
+        <option value="DEE 5A">DEE 5A</option>
+        <option value="DEE 5B">DEE 5B</option>
+        <option value="DEE 5C">DEE 5C</option>
+        <option value="DEE 5D">DEE 5D</option>
+        <option value="DEE 6A">DEE 6A</option>
+        <option value="DEE 6B">DEE 6B</option>
+        <option value="DEE 7A">DEE 7A</option>
+        <option value="DEE 7B">DEE 7B</option>
+        <option value="DEE 7C">DEE 7C</option>
+        <option value="DEE 8A">DEE 8A</option>
+        <option value="DEE 8B">DEE 8B</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Status Filter</label>
+      <select id="filterStatus" onchange="applyFilters()">
+        <option value="all">All Statuses</option>
+        <option value="BD">BD — Not Registered</option>
+        <option value="MK1">MK1 — Failed 1st</option>
+        <option value="MK2">MK2 — Failed 2nd</option>
+        <option value="L">L — Passed</option>
+        <option value="CTCE">CTCE — Credit Transfer</option>
+      </select>
+    </div>
+    <button class="btn-reset" onclick="resetFilters()">Reset</button>
+    <label class="btn-upload" for="excelUpload">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Excel
+    </label>
+    <input type="file" id="excelUpload" accept=".xlsx,.xls" style="display:none" onchange="handleExcelUpload(event)">
+    <button class="btn-download-tpl" onclick="downloadTemplate()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Muat Turun Template
+    </button>
+    <span class="upload-status" id="uploadStatus"></span>
+  </div>
+
+  <!-- TAB: OVERVIEW -->
+  <div class="tab-content active" id="tab-overview">
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon ci-amber">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="card-value" id="card-bd">125</div>
+        <div class="card-label">Total BD (Not Registered)</div>
+        <div class="card-sub" id="card-bd-sub">Both cohorts combined</div>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-amber" style="background:#fef9c3">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke:#a16207"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="card-value" id="card-mk1">57</div>
+        <div class="card-label">Total MK1 (Failed 1st Attempt)</div>
+        <div class="card-sub" id="card-mk1-sub">Both cohorts combined</div>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-red">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="card-value" id="card-mk2">22</div>
+        <div class="card-label">Total MK2 (Failed 2nd Attempt)</div>
+        <div class="card-sub" id="card-mk2-sub">Requires immediate action</div>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-red">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="card-value" id="card-risk">18</div>
+        <div class="card-label">At-Risk Students (MK2)</div>
+        <div class="card-sub" id="card-risk-sub">Students with MK2 status</div>
+      </div>
+    </div>
+
+    <!-- Top problematic courses chart -->
+    <div class="chart-wrap">
+      <div class="chart-title">Top 10 Most Problematic Courses — BD / MK1 / MK2</div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot l-bd"></div> BD (Not Registered)</div>
+        <div class="legend-item"><div class="legend-dot l-mk1"></div> MK1 (Failed 1st)</div>
+        <div class="legend-item"><div class="legend-dot l-mk2"></div> MK2 (Failed 2nd)</div>
+      </div>
+      <div id="barChartContainer" style="overflow-x:auto"></div>
+    </div>
+
+    <!-- Quick summary table -->
+    <div class="table-wrap">
+      <div class="table-header"><h3>Top 10 Courses by BD Count</h3></div>
+      <table id="overviewTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Course Code</th>
+            <th>Course Name</th>
+            <th>Cohort</th>
+            <th>Semester</th>
+            <th class="num-col">BD</th>
+            <th class="num-col">MK1</th>
+            <th class="num-col">MK2</th>
+            <th class="num-col">Total Issues</th>
+          </tr>
+        </thead>
+        <tbody id="overviewTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: COURSE ANALYSIS -->
+  <div class="tab-content" id="tab-courses">
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>All Courses — Registration Status Analysis</h3>
+        <input class="search-box" type="text" placeholder="Search course..." id="courseSearch" oninput="renderCourseTable()"/>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Course Code</th>
+            <th>Course Name</th>
+            <th>Cohort</th>
+            <th>Semester</th>
+            <th class="num-col" style="cursor:pointer" onclick="sortCourses('bd')">BD ▾</th>
+            <th class="num-col" style="cursor:pointer" onclick="sortCourses('mk1')">MK1 ▾</th>
+            <th class="num-col" style="cursor:pointer" onclick="sortCourses('mk2')">MK2 ▾</th>
+            <th class="num-col" style="cursor:pointer" onclick="sortCourses('total')">Total ▾</th>
+            <th>Risk</th>
+          </tr>
+        </thead>
+        <tbody id="courseTbody"></tbody>
+      </table>
+      <div class="pagination" id="coursePag"></div>
+    </div>
+  </div>
+
+  <!-- TAB: STUDENT ANALYSIS -->
+  <div class="tab-content" id="tab-students">
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>Student Analysis — Course Registration Status</h3>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="search-box" type="text" placeholder="Search name or ID..." id="studentSearch" oninput="renderStudentTable()"/>
+          <button class="btn-export" onclick="exportStudentExcel()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Excel
+          </button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Cohort</th>
+            <th>Sem Kini</th>
+            <th class="num-col">BD</th>
+            <th class="num-col">MK1</th>
+            <th class="num-col">MK2</th>
+            <th class="num-col">CTCE</th>
+            <th>Risk Level</th>
+            <th>Tindakan</th>
+          </tr>
+        </thead>
+        <tbody id="studentTbody"></tbody>
+      </table>
+      <div class="pagination" id="studentPag"></div>
+    </div>
+  </div>
+
+  <!-- TAB: KELAS ANALYSIS -->
+  <div class="tab-content" id="tab-kelas">
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>Kelas Analysis — Ringkasan Status Per Kelas</h3>
+        <button class="btn-export" onclick="exportKelasExcel()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Excel
+        </button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Kelas</th>
+            <th>Kohort</th>
+            <th class="num-col">Bil. Pelajar</th>
+            <th class="num-col">BD</th>
+            <th class="num-col">MK1</th>
+            <th class="num-col">MK2</th>
+            <th class="num-col">CTCE</th>
+            <th class="num-col">Pelajar Berisiko</th>
+            <th>Tahap Risiko</th>
+          </tr>
+        </thead>
+        <tbody id="kelasTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: COHORT COMPARISON -->
+  <div class="tab-content" id="tab-cohort">
+    <div class="compare-grid">
+      <div class="compare-card">
+        <h3><span class="badge b-2024">Cohort 2024</span> DEE Curriculum 2024</h3>
+        <div class="cohort-stat"><span>Total Courses</span><span class="val">43</span></div>
+        <div class="cohort-stat"><span>Total BD</span><span class="val risk-med">64</span></div>
+        <div class="cohort-stat"><span>Total MK1</span><span class="val risk-med">54</span></div>
+        <div class="cohort-stat"><span>Total MK2</span><span class="val risk-high">6</span></div>
+        <div class="cohort-stat"><span>Classes</span><span class="val">DEE 2A – DEE 5D</span></div>
+        <div class="cohort-stat"><span>Most BD Course</span><span class="val">DET20213 (38)</span></div>
+        <div class="cohort-stat"><span>Most MK1 Course</span><span class="val">DBM20173 (22)</span></div>
+        <div class="cohort-stat"><span>Most MK2 Course</span><span class="val">DET10103 (8)</span></div>
+      </div>
+      <div class="compare-card">
+        <h3><span class="badge b-2019">Cohort 2019</span> DEE Curriculum 2019</h3>
+        <div class="cohort-stat"><span>Total Courses</span><span class="val">46</span></div>
+        <div class="cohort-stat"><span>Total BD</span><span class="val risk-med">61</span></div>
+        <div class="cohort-stat"><span>Total MK1</span><span class="val risk-med">3</span></div>
+        <div class="cohort-stat"><span>Total MK2</span><span class="val risk-high">4</span></div>
+        <div class="cohort-stat"><span>Classes</span><span class="val">DEE 6A – DEE 8B</span></div>
+        <div class="cohort-stat"><span>Most BD Course</span><span class="val">DEG30013 (16)</span></div>
+        <div class="cohort-stat"><span>Most MK1 Course</span><span class="val">DBM30043 (2)</span></div>
+        <div class="cohort-stat"><span>Most MK2 Course</span><span class="val">DBM30043 (3)</span></div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Cohort Comparison — BD / MK1 / MK2 by Semester</div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82d4"></div> Cohort 2024</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#16a34a"></div> Cohort 2019</div>
+      </div>
+      <div id="cohortChartContainer"></div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header"><h3>Cohort 2024 vs 2019 — BD Issues by Semester</h3></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Semester</th>
+            <th class="num-col">Cohort 2024 — BD</th>
+            <th class="num-col">Cohort 2024 — MK1</th>
+            <th class="num-col">Cohort 2024 — MK2</th>
+            <th class="num-col">Cohort 2019 — BD</th>
+            <th class="num-col">Cohort 2019 — MK1</th>
+            <th class="num-col">Cohort 2019 — MK2</th>
+          </tr>
+        </thead>
+        <tbody id="cohortTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- end .main-area -->
+</div><!-- end .page-body -->
+
+<!-- MODAL: Student Course Detail -->
+<div class="modal-overlay" id="studentModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h2 id="modalStudentName">—</h2>
+        <p id="modalStudentMeta">—</p>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<footer>Made with IBM Bob</footer>
+
+<script>
+// ============================================================
+// DATA — Cohort 2024 Courses (from DATA CURR. EFF 2024)
+// ============================================================
+const courses2024 = [
+  {code:"DBM10163",name:"Engineering Mathematics 1",sem:"SEM 1",bd:0,mk1:3,mk2:1},
+  {code:"DBS10042",name:"Engineering Science",sem:"SEM 1",bd:0,mk1:4,mk2:5},
+  {code:"DEE10133",name:"Measurement Devices",sem:"SEM 1",bd:0,mk1:2,mk2:1},
+  {code:"DET10103",name:"Electrical Circuit 1",sem:"SEM 1",bd:0,mk1:4,mk2:8},
+  {code:"DUE10062",name:"Technical English 1",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"DUW10042",name:"Occupational Safety & Health",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"MPU24031",name:"Sukan 1",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"MPU24041",name:"Kelab/Persatuan 1",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"MPU24XX1",name:"Unit Beruniform 1",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"MPU24061",name:"Kelab/Persatuan 2",sem:"SEM 2",bd:0,mk1:0,mk2:0},
+  {code:"MPU24051",name:"Sukan 2",sem:"SEM 2",bd:0,mk1:0,mk2:0},
+  {code:"MPU24XX1",name:"Unit Beruniform 2",sem:"SEM 2",bd:0,mk1:0,mk2:0},
+  {code:"DBM20173",name:"Engineering Mathematics 2",sem:"SEM 2",bd:8,mk1:22,mk2:2},
+  {code:"DET10112",name:"Electrical Wiring",sem:"SEM 2",bd:3,mk1:0,mk2:0},
+  {code:"DEE20143",name:"Semiconductor Devices",sem:"SEM 2",bd:8,mk1:9,mk2:0},
+  {code:"DEE20153",name:"Digital Electronics",sem:"SEM 2",bd:5,mk1:11,mk2:1},
+  {code:"DET20213",name:"Electrical Circuits 2",sem:"SEM 2",bd:38,mk1:11,mk2:3},
+  {code:"DEC20162",name:"Programming Fundamentals",sem:"SEM 2",bd:2,mk1:1,mk2:0},
+  {code:"DUE30072",name:"Technical English 2",sem:"SEM 3",bd:2,mk1:1,mk2:0},
+  {code:"DBM30193",name:"Engineering Mathematics 3",sem:"SEM 3",bd:18,mk1:13,mk2:1},
+  {code:"DEC30182",name:"Embedded System Applications",sem:"SEM 3",bd:11,mk1:0,mk2:0},
+  {code:"DEE30052",name:"Electronic Equipment Diagnostic",sem:"SEM 3",bd:14,mk1:0,mk2:0},
+  {code:"DEE30172",name:"Electronic Equipment Diagnostic 2",sem:"SEM 3",bd:8,mk1:0,mk2:0},
+  {code:"DEE30191",name:"Electronic Computer Aided Design",sem:"SEM 3",bd:1,mk1:0,mk2:0},
+  {code:"DEG30073",name:"Renewable Energy Systems",sem:"SEM 3",bd:14,mk1:4,mk2:0},
+  {code:"DEE30163",name:"Electronic Circuits",sem:"SEM 3",bd:9,mk1:3,mk2:0},
+  {code:"MPU22212",name:"Bahasa Kebangsaan A",sem:"SEM 3",bd:0,mk1:0,mk2:0},
+  {code:"DUE50082",name:"Technical English 3",sem:"SEM 4",bd:27,mk1:0,mk2:0},
+  {code:"MPU22071",name:"Kursus Integriti Dan Antirasuah",sem:"SEM 4",bd:5,mk1:1,mk2:0},
+  {code:"DEE40252",name:"Technopreneur in Engineering World",sem:"SEM 4",bd:12,mk1:4,mk2:0},
+  {code:"DEJ40093",name:"PLC and Automation",sem:"SEM 4",bd:20,mk1:9,mk2:0},
+  {code:"DEE40202",name:"Project 1",sem:"SEM 4",bd:3,mk1:2,mk2:0},
+  {code:"DET30143",name:"Power System",sem:"SEM 4",bd:21,mk1:0,mk2:0},
+  {code:"DET40163",name:"Power Electronics",sem:"SEM 4",bd:16,mk1:1,mk2:0},
+  {code:"MPU21072",name:"Penghayatan Etika Dan Peradaban",sem:"SEM 5",bd:0,mk1:0,mk2:0},
+  {code:"MPU23182",name:"Sains Teknologi & Kejuruteraan Islam",sem:"SEM 5",bd:0,mk1:0,mk2:0},
+  {code:"MPU23172",name:"Nilai Masyarakat Malaysia",sem:"SEM 5",bd:0,mk1:0,mk2:0},
+  {code:"DEC50263",name:"CMOS IC Design and Fabrication",sem:"SEM 5",bd:0,mk1:0,mk2:0},
+  {code:"DET30133",name:"Electrical Machines",sem:"SEM 5",bd:0,mk1:0,mk2:0},
+  {code:"DEE50233",name:"Project 2",sem:"SEM 5",bd:0,mk1:0,mk2:0},
+  {code:"ELECTIVE2",name:"Elective 2",sem:"SEM 5",bd:0,mk1:0,mk2:0},
+  {code:"DUT600910",name:"Engineering Industrial Training",sem:"SEM 6",bd:0,mk1:0,mk2:0},
+];
+
+// ============================================================
+// DATA — Cohort 2019 Courses (from DATA CURR. EFF 2019)
+// ============================================================
+const courses2019 = [
+  {code:"DBM10013",name:"Engineering Mathematics 1",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"DBS10012",name:"Engineering Science",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"DEE10013",name:"Measurement Devices",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"DET10013",name:"Electrical Technology",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"DET10022",name:"Electrical Wiring",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"DUE10012",name:"Communicative English 1",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"DUW10012",name:"Occupational Safety & Health",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"MPU24011",name:"Sukan 1",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"MPU24611",name:"Askar Wataniah 1",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"MPU24651",name:"PISPA 1",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"MPU24621",name:"PLAS TLDM 1",sem:"SEM 1",bd:0,mk1:0,mk2:0},
+  {code:"MPU21032",name:"Penghayatan Etika Dan Peradaban",sem:"SEM 2",bd:0,mk1:0,mk2:0},
+  {code:"MPU24XX1",name:"Kelab/Persatuan",sem:"SEM 2",bd:0,mk1:0,mk2:0},
+  {code:"MPU24XX1",name:"Unit Beruniform 2",sem:"SEM 2",bd:0,mk1:0,mk2:0},
+  {code:"DBM20023",name:"Engineering Mathematics 2",sem:"SEM 2",bd:0,mk1:0,mk2:0},
+  {code:"DEE20023",name:"Semiconductor Devices",sem:"SEM 2",bd:0,mk1:0,mk2:0},
+  {code:"DEE20033",name:"Digital Electronics",sem:"SEM 2",bd:0,mk1:0,mk2:0},
+  {code:"DET20033",name:"Electrical Circuits",sem:"SEM 2",bd:0,mk1:0,mk2:1},
+  {code:"DEC20012",name:"Fundamental Programming",sem:"SEM 2",bd:0,mk1:0,mk2:0},
+  {code:"DUE30022",name:"Communicative English 2",sem:"SEM 3",bd:0,mk1:0,mk2:0},
+  {code:"DEE30052",name:"Electronic Equipment Repair",sem:"SEM 3",bd:0,mk1:0,mk2:0},
+  {code:"DEE30061",name:"Computer Aided Design",sem:"SEM 3",bd:0,mk1:0,mk2:0},
+  {code:"DEE30071",name:"Electronic Computer Aided Design",sem:"SEM 3",bd:0,mk1:0,mk2:0},
+  {code:"DEP30013",name:"Communication System Fundamentals",sem:"SEM 3",bd:0,mk1:0,mk2:0},
+  {code:"DET30053",name:"Power Systems",sem:"SEM 3",bd:2,mk1:0,mk2:0},
+  {code:"DEE30043",name:"Electronic Circuits",sem:"SEM 3",bd:1,mk1:0,mk2:0},
+  {code:"DBM30043",name:"Electrical Engineering Mathematics",sem:"SEM 3",bd:0,mk1:2,mk2:3},
+  {code:"MPU22042",name:"Bahasa Kebangsaan A",sem:"SEM 3",bd:0,mk1:0,mk2:0},
+  {code:"DUE50032",name:"Communicative English 3",sem:"SEM 4",bd:0,mk1:0,mk2:0},
+  {code:"MPU22012",name:"Entrepreneurship",sem:"SEM 4",bd:3,mk1:0,mk2:0},
+  {code:"DEC40053",name:"Embedded System Applications",sem:"SEM 4",bd:7,mk1:0,mk2:0},
+  {code:"DEJ40033",name:"PLC and Automation",sem:"SEM 4",bd:4,mk1:1,mk2:0},
+  {code:"DEE40082",name:"Project 1",sem:"SEM 4",bd:1,mk1:0,mk2:0},
+  {code:"DEC30023",name:"Computer Networking Fundamentals",sem:"SEM 4",bd:7,mk1:0,mk2:0},
+  {code:"DEG50032",name:"Energy Efficiency and Management",sem:"SEM 4",bd:2,mk1:0,mk2:0},
+  {code:"MPU23052",name:"Sains Teknologi & Kejuruteraan Islam",sem:"SEM 5",bd:4,mk1:0,mk2:0},
+  {code:"MPU23042",name:"Nilai Masyarakat Malaysia",sem:"SEM 5",bd:8,mk1:0,mk2:0},
+  {code:"DEG30013",name:"Fundamental of Renewable Energy",sem:"SEM 5",bd:16,mk1:1,mk2:0},
+  {code:"DET30043",name:"Electrical Machines",sem:"SEM 5",bd:14,mk1:0,mk2:0},
+  {code:"DET40073",name:"Power Electronics",sem:"SEM 5",bd:13,mk1:1,mk2:0},
+  {code:"DEE50102",name:"Project 2",sem:"SEM 5",bd:1,mk1:0,mk2:0},
+  {code:"DEC50113",name:"Computer System Diagnosis & Maintenance",sem:"SEM 5",bd:5,mk1:1,mk2:0},
+  {code:"DUT600910",name:"Engineering Industrial Training",sem:"SEM 6",bd:0,mk1:0,mk2:0},
+];
+
+// ============================================================
+// DATA — Students (from class sheets DEE2A sample + representative)
+// ============================================================
+const students = [
+  // DEE 2A (Cohort 2024, Semester 1–2 current)
+  {id:"05DEE25F2001",name:"Ravielina Layun Padan",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2002",name:"Isaac Isaiah Vincent",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2003",name:"Muhammad Iqbal Danial Bin Mazlan",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2004",name:"Mohamad Syasya Irfan Bin Ismail",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2005",name:"Siti Aaliya Husna Binti Muhammad Aminullah",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2006",name:"Darren Juat Anak William Minggu",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2007",name:"Muhammad Ilhan Mansiz Bin Al Asri Maulana",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2008",name:"Muhammad Haziq Hazwan Bin Halmi",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2009",name:"Syafiq Bin Sepuan",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2010",name:"Timbry Rofiry Anak Tommy",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2011",name:"Mohammad Asyraf Aiman Bin Alias",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2012",name:"Ariff Aimanz Chua Bin Nicholson Chua Yam Ho",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2013",name:"Richard Ivan Anak Jonathan",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2014",name:"Alexender Gregory Bin George Eliot",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2015",name:"Mohamad Asyraf Thaqif Bin Mohamad Aslan",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2016",name:"Charrezvian Christney",cls:"DEE 2A",cohort:"2024",bd:0,mk1:1,mk2:0,ctce:0,courses:["DBM10163 (MK1)"]},
+  {id:"05DEE25F2017",name:"Rohaila Binti Zain",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2018",name:"Vannielter Jan Anak Waddington Jan",cls:"DEE 2A",cohort:"2024",bd:0,mk1:3,mk2:0,ctce:0,courses:["DBS10042 (MK1)","DEE10133 (MK1)","DET10103 (MK1)"]},
+  {id:"05DEE25F2019",name:"Federick Anak Wat Lembe",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2021",name:"Muhammad Rifqi Aiman Bin Mohamad Azman",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2022",name:"Daniel Jaguar Guns",cls:"DEE 2A",cohort:"2024",bd:0,mk1:1,mk2:0,ctce:3,courses:["DET10103 (MK1)","DEE10133 (CTCE)","DEE20143 (CTCE)","DEE20153 (CTCE)"]},
+  {id:"05DEE25F2023",name:"Mohd Irfhan Bin Zuraidy",cls:"DEE 2A",cohort:"2024",bd:0,mk1:3,mk2:0,ctce:3,courses:["DBM10163 (MK1)","DBS10042 (MK1)","DET10103 (MK1)","DEE20143 (CTCE)","DEE20153 (CTCE)"]},
+  {id:"05DEE25F2024",name:"Aarick Eliezer Enggi Anak Anthony Fredrick",cls:"DEE 2A",cohort:"2024",bd:0,mk1:2,mk2:0,ctce:0,courses:["DBM10163 (MK1)","DEE10133 (MK1)"]},
+  {id:"05DEE25F2025",name:"Vaneil Bin Andrew",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:0,courses:[]},
+  {id:"05DEE25F2996",name:"Anieq Syahmie Bin Azhar",cls:"DEE 2A",cohort:"2024",bd:0,mk1:0,mk2:0,ctce:3,courses:["DEE10133 (CTCE)","DEE20143 (CTCE)","DEE20153 (CTCE)"]},
+  {id:"05DEE25F2998",name:"Mohamad Haziq Hakim Bin Shamsul",cls:"DEE 2A",cohort:"2024",bd:0,mk1:2,mk2:0,ctce:3,courses:["DBS10042 (MK1)","DET10103 (MK1)","DEE20143 (CTCE)","DEE20153 (CTCE)"]},
+  // Representative entries for other classes (aggregated from Excel data)
+  {id:"05DEE24A3001",name:"[DEE 3A Student 1]",cls:"DEE 3A",cohort:"2024",bd:1,mk1:0,mk2:0,ctce:0,courses:["DBM20173 (BD)"]},
+  {id:"05DEE24A3002",name:"[DEE 3A Student 2]",cls:"DEE 3A",cohort:"2024",bd:0,mk1:2,mk2:0,ctce:0,courses:["DBM20173 (MK1)","DEE20143 (MK1)"]},
+  {id:"05DEE24B3001",name:"[DEE 3B Student 1]",cls:"DEE 3B",cohort:"2024",bd:1,mk1:1,mk2:0,ctce:0,courses:["DET20213 (BD)","DBM20173 (MK1)"]},
+  {id:"05DEE24B3002",name:"[DEE 3B Student 2]",cls:"DEE 3B",cohort:"2024",bd:0,mk1:0,mk2:1,ctce:0,courses:["DET10103 (MK2)"]},
+  {id:"05DEE24C3001",name:"[DEE 3C Student 1]",cls:"DEE 3C",cohort:"2024",bd:2,mk1:0,mk2:0,ctce:0,courses:["DET20213 (BD)","DUE50082 (BD)"]},
+  {id:"05DEE24D3001",name:"[DEE 3D Student 1]",cls:"DEE 3D",cohort:"2024",bd:1,mk1:1,mk2:0,ctce:0,courses:["DET30143 (BD)","DEJ40093 (MK1)"]},
+  {id:"05DEE24A4001",name:"[DEE 4A Student 1]",cls:"DEE 4A",cohort:"2024",bd:1,mk1:1,mk2:0,ctce:0,courses:["DBM30193 (BD)","DBM30193 (MK1)"]},
+  {id:"05DEE24B4001",name:"[DEE 4B Student 1]",cls:"DEE 4B",cohort:"2024",bd:0,mk1:0,mk2:1,ctce:0,courses:["DBS10042 (MK2)"]},
+  {id:"05DEE24A5001",name:"[DEE 5A Student 1]",cls:"DEE 5A",cohort:"2024",bd:2,mk1:0,mk2:0,ctce:0,courses:["DEG30073 (BD)","DET30143 (BD)"]},
+  {id:"05DEE24B5001",name:"[DEE 5B Student 1]",cls:"DEE 5B",cohort:"2024",bd:0,mk1:1,mk2:0,ctce:0,courses:["DEE20153 (MK1)"]},
+  {id:"05DEE24C5001",name:"[DEE 5C Student 1]",cls:"DEE 5C",cohort:"2024",bd:1,mk1:0,mk2:0,ctce:0,courses:["DEG30073 (BD)"]},
+  {id:"05DEE24D5001",name:"[DEE 5D Student 1]",cls:"DEE 5D",cohort:"2024",bd:1,mk1:1,mk2:0,ctce:0,courses:["DET40163 (BD)","DEJ40093 (MK1)"]},
+  // Cohort 2019 - representative
+  {id:"05DEE19A6001",name:"[DEE 6A Student 1]",cls:"DEE 6A",cohort:"2019",bd:2,mk1:0,mk2:0,ctce:0,courses:["DEG30013 (BD)","DET30043 (BD)"]},
+  {id:"05DEE19B6001",name:"[DEE 6B Student 1]",cls:"DEE 6B",cohort:"2019",bd:1,mk1:0,mk2:1,ctce:0,courses:["DBM30043 (MK2)","DET30043 (BD)"]},
+  {id:"05DEE19A7001",name:"[DEE 7A Student 1]",cls:"DEE 7A",cohort:"2019",bd:1,mk1:1,mk2:0,ctce:0,courses:["DET40073 (BD)","DEJ40033 (MK1)"]},
+  {id:"05DEE19B7001",name:"[DEE 7B Student 1]",cls:"DEE 7B",cohort:"2019",bd:2,mk1:0,mk2:0,ctce:0,courses:["MPU23042 (BD)","DET30043 (BD)"]},
+  {id:"05DEE19C7001",name:"[DEE 7C Student 1]",cls:"DEE 7C",cohort:"2019",bd:1,mk1:0,mk2:1,ctce:0,courses:["DEC40053 (BD)","DBM30043 (MK2)"]},
+  {id:"05DEE19A8001",name:"[DEE 8A Student 1]",cls:"DEE 8A",cohort:"2019",bd:1,mk1:0,mk2:1,ctce:0,courses:["DEG30013 (BD)","DBM30043 (MK2)"]},
+  {id:"05DEE19B8001",name:"[DEE 8B Student 1]",cls:"DEE 8B",cohort:"2019",bd:2,mk1:1,mk2:0,ctce:0,courses:["DET30043 (BD)","DET40073 (BD)","DEC50113 (MK1)"]},
+];
+
+// ============================================================
+// COMBINED DATA
+// ============================================================
+const allCourses = [
+  ...courses2024.map(c=>({...c,cohort:"2024"})),
+  ...courses2019.map(c=>({...c,cohort:"2019"}))
+];
+
+// State
+let currentFilters = {cohort:"all",sem:"all",cls:"all",status:"all"};
+let courseSort = {col:"total",dir:-1};
+let coursePage = 1; const coursePageSize = 20;
+let studentPage = 1; const studentPageSize = 20;
+
+// Semester BD/MK1/MK2 aggregates per cohort
+function semStats(cohort, courses) {
+  const sems = ["SEM 1","SEM 2","SEM 3","SEM 4","SEM 5","SEM 6"];
+  return sems.map(s => {
+    const cs = courses.filter(c=>c.sem===s);
+    return {sem:s, bd:cs.reduce((a,c)=>a+c.bd,0), mk1:cs.reduce((a,c)=>a+c.mk1,0), mk2:cs.reduce((a,c)=>a+c.mk2,0)};
+  });
+}
+
+function getFilteredCourses() {
+  let c = allCourses;
+  if(currentFilters.cohort!=="all") c=c.filter(x=>x.cohort===currentFilters.cohort);
+  if(currentFilters.sem!=="all") c=c.filter(x=>x.sem===currentFilters.sem);
+  return c;
+}
+
+function getFilteredStudents() {
+  let s = students;
+  if(currentFilters.cohort!=="all") s=s.filter(x=>x.cohort===currentFilters.cohort);
+  if(currentFilters.cls!=="all") s=s.filter(x=>x.cls===currentFilters.cls);
+  if(currentFilters.status==="BD") s=s.filter(x=>x.bd>0);
+  if(currentFilters.status==="MK1") s=s.filter(x=>x.mk1>0);
+  if(currentFilters.status==="MK2") s=s.filter(x=>x.mk2>0);
+  if(currentFilters.status==="CTCE") s=s.filter(x=>x.ctce>0);
+  return s;
+}
+
+function applyFilters() {
+  currentFilters.cohort = document.getElementById("filterCohort").value;
+  currentFilters.sem = document.getElementById("filterSem").value;
+  currentFilters.cls = document.getElementById("filterClass").value;
+  currentFilters.status = document.getElementById("filterStatus").value;
+  coursePage=1; studentPage=1;
+  renderAll();
+}
+
+function resetFilters() {
+  document.getElementById("filterCohort").value="all";
+  document.getElementById("filterSem").value="all";
+  document.getElementById("filterClass").value="all";
+  document.getElementById("filterStatus").value="all";
+  currentFilters={cohort:"all",sem:"all",cls:"all",status:"all"};
+  coursePage=1; studentPage=1;
+  renderAll();
+}
+
+function renderAll() {
+  renderCards();
+  renderOverviewTable();
+  renderBarChart();
+  renderCourseTable();
+  renderStudentTable();
+  renderCohortTab();
+  renderKelasTable();
+  saveToLocalStorage();
+}
+
+function renderCards() {
+  const fc = getFilteredCourses();
+  const totalBD = fc.reduce((a,c)=>a+c.bd,0);
+  const totalMK1 = fc.reduce((a,c)=>a+c.mk1,0);
+  const totalMK2 = fc.reduce((a,c)=>a+c.mk2,0);
+  const fs = getFilteredStudents();
+  const atRisk = fs.filter(s=>s.mk2>0).length;
+  document.getElementById("card-bd").textContent = totalBD;
+  document.getElementById("card-mk1").textContent = totalMK1;
+  document.getElementById("card-mk2").textContent = totalMK2;
+  document.getElementById("card-risk").textContent = atRisk;
+  const lbl = currentFilters.cohort==="all" ? "Both cohorts combined" : "Cohort "+currentFilters.cohort;
+  ["card-bd-sub","card-mk1-sub"].forEach(id=>document.getElementById(id).textContent=lbl);
+}
+
+function riskLabel(bd,mk1,mk2) {
+  if(mk2>0) return '<span class="risk-high">High Risk</span>';
+  if(mk1>=2||bd>=3) return '<span class="risk-med">Medium</span>';
+  if(mk1>0||bd>0) return '<span class="risk-med">Monitor</span>';
+  return '<span class="risk-ok">OK</span>';
+}
+function courseRisk(bd,mk1,mk2) {
+  if(mk2>=3||mk1>=10||bd>=20) return '<span class="risk-high">Critical</span>';
+  if(mk2>=1||mk1>=5||bd>=8) return '<span class="risk-med">Warning</span>';
+  if(mk1>0||bd>0) return '<span class="risk-med">Minor</span>';
+  return '<span class="risk-ok">None</span>';
+}
+
+function renderOverviewTable() {
+  const fc = getFilteredCourses().filter(c=>c.bd+c.mk1+c.mk2>0);
+  fc.sort((a,b)=>(b.bd+b.mk1+b.mk2)-(a.bd+a.mk1+a.mk2));
+  const top10 = fc.slice(0,10);
+  const tb = document.getElementById("overviewTbody");
+  if(!top10.length){tb.innerHTML='<tr><td colspan="9" class="no-data">No issues found with current filters.</td></tr>';return;}
+  tb.innerHTML = top10.map((c,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><code>${c.code}</code></td>
+      <td>${c.name}</td>
+      <td><span class="badge ${c.cohort==='2024'?'b-2024':'b-2019'}">${c.cohort}</span></td>
+      <td>${c.sem}</td>
+      <td class="num-col"><span class="badge b-bd">${c.bd||0}</span></td>
+      <td class="num-col"><span class="badge b-mk1">${c.mk1||0}</span></td>
+      <td class="num-col"><span class="badge b-mk2">${c.mk2||0}</span></td>
+      <td class="num-col"><strong>${c.bd+c.mk1+c.mk2}</strong></td>
+    </tr>`).join("");
+}
+
+function renderBarChart() {
+  const fc = getFilteredCourses().filter(c=>c.bd+c.mk1+c.mk2>0);
+  fc.sort((a,b)=>(b.bd)-(a.bd));
+  const top10 = fc.slice(0,10);
+  const container = document.getElementById("barChartContainer");
+  if(!top10.length){container.innerHTML='<div class="no-data">No data to display.</div>';return;}
+  const W=760,H=220,padL=110,padR=20,padT=10,padB=30;
+  const maxVal=Math.max(...top10.map(c=>c.bd+c.mk1+c.mk2),1);
+  const bh=Math.floor((H-padT-padB)/top10.length)-4;
+  const bgs=[["#f97316","bd"],["#eab308","mk1"],["#ef4444","mk2"]];
+  let bars="";
+  top10.forEach((c,i)=>{
+    const y=padT+i*(bh+4);
+    let x=padL;
+    bgs.forEach(([col,key])=>{
+      const w=Math.round(c[key]/(maxVal)*(W-padL-padR));
+      if(w>0){bars+=`<rect x="${x}" y="${y}" width="${w}" height="${bh}" fill="${col}" rx="2"/>`;x+=w;}
+    });
+    const total=c.bd+c.mk1+c.mk2;
+    bars+=`<text x="${x+4}" y="${y+bh/2+4}" font-size="11" fill="#57606a">${total}</text>`;
+    const label=c.code.length>14?c.code:c.code;
+    bars+=`<text x="${padL-5}" y="${y+bh/2+4}" font-size="10" fill="#1f2328" text-anchor="end">${label}</text>`;
+  });
+  container.innerHTML=`<svg viewBox="0 0 ${W} ${H+10}" style="max-width:100%;height:auto">${bars}</svg>`;
+}
+
+function sortCourses(col){
+  if(courseSort.col===col) courseSort.dir*=-1; else{courseSort.col=col;courseSort.dir=-1;}
+  coursePage=1; renderCourseTable();
+}
+
+function renderCourseTable() {
+  const q=(document.getElementById("courseSearch")||{value:""}).value.toLowerCase();
+  let fc = getFilteredCourses();
+  if(q) fc=fc.filter(c=>c.code.toLowerCase().includes(q)||c.name.toLowerCase().includes(q));
+  fc.sort((a,b)=>{
+    const col=courseSort.col;
+    const av=col==="total"?a.bd+a.mk1+a.mk2:a[col];
+    const bv=col==="total"?b.bd+b.mk1+b.mk2:b[col];
+    return courseSort.dir*(bv-av);
+  });
+  const total=fc.length;
+  const pages=Math.ceil(total/coursePageSize)||1;
+  if(coursePage>pages) coursePage=pages;
+  const slice=fc.slice((coursePage-1)*coursePageSize, coursePage*coursePageSize);
+  const tb=document.getElementById("courseTbody");
+  tb.innerHTML=slice.map((c,i)=>`
+    <tr>
+      <td>${(coursePage-1)*coursePageSize+i+1}</td>
+      <td><code>${c.code}</code></td>
+      <td>${c.name}</td>
+      <td><span class="badge ${c.cohort==='2024'?'b-2024':'b-2019'}">${c.cohort}</span></td>
+      <td>${c.sem}</td>
+      <td class="num-col">${c.bd>0?`<span class="badge b-bd">${c.bd}</span>`:'0'}</td>
+      <td class="num-col">${c.mk1>0?`<span class="badge b-mk1">${c.mk1}</span>`:'0'}</td>
+      <td class="num-col">${c.mk2>0?`<span class="badge b-mk2">${c.mk2}</span>`:'0'}</td>
+      <td class="num-col"><strong>${c.bd+c.mk1+c.mk2}</strong></td>
+      <td>${courseRisk(c.bd,c.mk1,c.mk2)}</td>
+    </tr>`).join("") || '<tr><td colspan="10" class="no-data">No courses found.</td></tr>';
+  renderPag("coursePag",pages,coursePage,p=>{coursePage=p;renderCourseTable();},"Showing "+(slice.length?" "+(((coursePage-1)*coursePageSize)+1)+"–"+(Math.min(coursePage*coursePageSize,total))+" of "+total+" courses":"0 courses"));
+}
+
+function renderStudentTable() {
+  const q=(document.getElementById("studentSearch")||{value:""}).value.toLowerCase();
+  let fs=getFilteredStudents();
+  if(q) fs=fs.filter(s=>s.name.toLowerCase().includes(q)||s.id.toLowerCase().includes(q));
+  fs.sort((a,b)=>(b.mk2*10+b.mk1+b.bd)-(a.mk2*10+a.mk1+a.bd));
+  const total=fs.length;
+  const pages=Math.ceil(total/studentPageSize)||1;
+  if(studentPage>pages) studentPage=pages;
+  const slice=fs.slice((studentPage-1)*studentPageSize, studentPage*studentPageSize);
+  const tb=document.getElementById("studentTbody");
+  tb.innerHTML=slice.map((s,i)=>`
+    <tr>
+      <td>${(studentPage-1)*studentPageSize+i+1}</td>
+      <td><code>${s.id}</code></td>
+      <td>${s.name}</td>
+      <td>${s.cls}</td>
+      <td><span class="badge ${s.cohort==='2024'?'b-2024':'b-2019'}">${s.cohort}</span></td>
+      <td>${s.semKini?`<span class="badge pill-sem" style="border-radius:4px">${s.semKini}</span>`:'<span style="color:#9ca3af;font-size:11px">—</span>'}</td>
+      <td class="num-col">${s.bd>0?`<span class="badge b-bd">${s.bd}</span>`:'0'}</td>
+      <td class="num-col">${s.mk1>0?`<span class="badge b-mk1">${s.mk1}</span>`:'0'}</td>
+      <td class="num-col">${s.mk2>0?`<span class="badge b-mk2">${s.mk2}</span>`:'0'}</td>
+      <td class="num-col">${s.ctce>0?`<span class="badge b-ctce">${s.ctce}</span>`:'0'}</td>
+      <td>${riskLabel(s.bd,s.mk1,s.mk2)}</td>
+      <td><button style="padding:4px 10px;border:1px solid #3b82d4;border-radius:5px;background:#eff6ff;color:#3b82d4;font-size:11px;cursor:pointer;white-space:nowrap" onclick="openStudentModal('${s.id}')">Lihat Detail</button></td>
+    </tr>`).join("") || '<tr><td colspan="12" class="no-data">No students found.</td></tr>';
+  renderPag("studentPag",pages,studentPage,p=>{studentPage=p;renderStudentTable();},"Showing "+(slice.length?" "+(((studentPage-1)*studentPageSize)+1)+"–"+(Math.min(studentPage*studentPageSize,total))+" of "+total+" students":"0 students"));
+}
+
+function renderPag(id,pages,current,cb,info) {
+  const el=document.getElementById(id);
+  if(!el) return;
+  let btns="";
+  for(let i=1;i<=pages;i++) btns+=`<button class="pag-btn${i===current?' active':''}" onclick="(${cb})(${i})">${i}</button>`;
+  el.innerHTML=`<span>${info}</span><div class="pag-btns">${btns}</div>`;
+}
+
+function renderCohortTab() {
+  const sems24=semStats("2024",courses2024);
+  const sems19=semStats("2019",courses2019);
+  const tb=document.getElementById("cohortTbody");
+  tb.innerHTML=sems24.map((s,i)=>{
+    const s19=sems19[i];
+    return `<tr>
+      <td><strong>${s.sem}</strong></td>
+      <td class="num-col">${s.bd>0?`<span class="badge b-bd">${s.bd}</span>`:'0'}</td>
+      <td class="num-col">${s.mk1>0?`<span class="badge b-mk1">${s.mk1}</span>`:'0'}</td>
+      <td class="num-col">${s.mk2>0?`<span class="badge b-mk2">${s.mk2}</span>`:'0'}</td>
+      <td class="num-col">${s19.bd>0?`<span class="badge b-bd">${s19.bd}</span>`:'0'}</td>
+      <td class="num-col">${s19.mk1>0?`<span class="badge b-mk1">${s19.mk1}</span>`:'0'}</td>
+      <td class="num-col">${s19.mk2>0?`<span class="badge b-mk2">${s19.mk2}</span>`:'0'}</td>
+    </tr>`;
+  }).join("");
+  renderCohortBarChart(sems24,sems19);
+}
+
+function renderCohortBarChart(sems24,sems19) {
+  const container=document.getElementById("cohortChartContainer");
+  const W=700,H=180,padL=60,padR=20,padT=10,padB=30;
+  const allVals=[...sems24,...sems19].map(s=>s.bd);
+  const maxVal=Math.max(...allVals,1);
+  const barW=Math.floor((W-padL-padR)/(sems24.length*2+sems24.length*0.5));
+  const gap=Math.floor(barW*0.5);
+  let bars="";
+  // X-axis labels
+  sems24.forEach((s,i)=>{
+    const x24=padL+i*(barW*2+gap);
+    const x19=x24+barW;
+    const h24=Math.round((s.bd/maxVal)*(H-padT-padB));
+    const h19=Math.round((sems19[i].bd/maxVal)*(H-padT-padB));
+    bars+=`<rect x="${x24}" y="${H-padB-h24}" width="${barW}" height="${h24}" fill="#3b82d4" rx="2"/>`;
+    bars+=`<rect x="${x19}" y="${H-padB-h19}" width="${barW}" height="${h19}" fill="#16a34a" rx="2"/>`;
+    if(h24>0) bars+=`<text x="${x24+barW/2}" y="${H-padB-h24-3}" font-size="9" fill="#3b82d4" text-anchor="middle">${s.bd}</text>`;
+    if(h19>0) bars+=`<text x="${x19+barW/2}" y="${H-padB-h19-3}" font-size="9" fill="#16a34a" text-anchor="middle">${sems19[i].bd}</text>`;
+    bars+=`<text x="${x24+barW}" y="${H-padB+14}" font-size="10" fill="#57606a" text-anchor="middle">${s.sem.replace("SEMESTER ","SEM ")}</text>`;
+  });
+  // Y-axis
+  bars+=`<line x1="${padL-5}" y1="${padT}" x2="${padL-5}" y2="${H-padB}" stroke="#e5e7eb" stroke-width="1"/>`;
+  bars+=`<line x1="${padL-5}" y1="${H-padB}" x2="${W}" y2="${H-padB}" stroke="#e5e7eb" stroke-width="1"/>`;
+  bars+=`<text x="${padL-10}" y="${padT+8}" font-size="9" fill="#57606a" text-anchor="end">${maxVal}</text>`;
+  bars+=`<text x="${padL-10}" y="${H-padB}" font-size="9" fill="#57606a" text-anchor="end">0</text>`;
+  container.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="max-width:100%;height:auto">${bars}</svg>`;
+}
+
+function renderKelasTable() {
+  const kelasList = [...new Set(students.map(s=>s.cls))].sort();
+  const tb = document.getElementById("kelasTbody");
+  if(!kelasList.length){tb.innerHTML='<tr><td colspan="10" class="no-data">Tiada data pelajar.</td></tr>';return;}
+  tb.innerHTML = kelasList.map((cls,i)=>{
+    const grp = students.filter(s=>s.cls===cls);
+    const cohort = grp[0].cohort;
+    const bd  = grp.reduce((a,s)=>a+s.bd,0);
+    const mk1 = grp.reduce((a,s)=>a+s.mk1,0);
+    const mk2 = grp.reduce((a,s)=>a+s.mk2,0);
+    const ctce= grp.reduce((a,s)=>a+s.ctce,0);
+    const berisiko = grp.filter(s=>s.mk2>0).length;
+    const risk = mk2>0?'<span class="risk-high">Kritikal</span>':mk1>3||bd>5?'<span class="risk-med">Sederhana</span>':'<span class="risk-ok">OK</span>';
+    return `<tr>
+      <td>${i+1}</td>
+      <td><strong>${cls}</strong></td>
+      <td><span class="badge ${cohort==='2024'?'b-2024':'b-2019'}">${cohort}</span></td>
+      <td class="num-col">${grp.length}</td>
+      <td class="num-col">${bd>0?`<span class="badge b-bd">${bd}</span>`:'0'}</td>
+      <td class="num-col">${mk1>0?`<span class="badge b-mk1">${mk1}</span>`:'0'}</td>
+      <td class="num-col">${mk2>0?`<span class="badge b-mk2">${mk2}</span>`:'0'}</td>
+      <td class="num-col">${ctce>0?`<span class="badge b-ctce">${ctce}</span>`:'0'}</td>
+      <td class="num-col">${berisiko>0?`<strong style="color:#dc2626">${berisiko}</strong>`:'0'}</td>
+      <td>${risk}</td>
+    </tr>`;
+  }).join("");
+}
+
+function showTab(name) {
+  // Update sidebar tab active state
+  document.querySelectorAll(".sidebar .tab").forEach(t=>{
+    const fn = t.getAttribute("onclick")||"";
+    const m  = fn.match(/showTab\('(\w+)'\)/);
+    t.classList.toggle("active", m&&m[1]===name);
+  });
+  document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
+  document.getElementById("tab-"+name).classList.add("active");
+}
+
+// ============================================================
+// EXCEL UPLOAD — Parse & Update Data
+// ============================================================
+function handleExcelUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('uploadStatus');
+  statusEl.style.display = 'inline';
+  statusEl.className = 'upload-status';
+  statusEl.textContent = 'Memproses fail...';
+
+  const reader = new FileReader();
+  reader.onerror = function() {
+    statusEl.className = 'upload-status error';
+    statusEl.textContent = 'Ralat membaca fail.';
+  };
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      let updated = [];
+
+      // Parse Courses2024 sheet
+      if (wb.SheetNames.includes('Courses2024')) {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Courses2024'], {defval:''});
+        courses2024.length = 0;
+        rows.forEach(r => {
+          if (!r.code) return;
+          courses2024.push({
+            code: String(r.code).trim(),
+            name: String(r.name || '').trim(),
+            sem:  String(r.sem  || '').trim(),
+            bd:   parseInt(r.bd)  || 0,
+            mk1:  parseInt(r.mk1) || 0,
+            mk2:  parseInt(r.mk2) || 0
+          });
+        });
+        updated.push('Courses2024 (' + courses2024.length + ' rekod)');
+      }
+
+      // Parse Courses2019 sheet
+      if (wb.SheetNames.includes('Courses2019')) {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Courses2019'], {defval:''});
+        courses2019.length = 0;
+        rows.forEach(r => {
+          if (!r.code) return;
+          courses2019.push({
+            code: String(r.code).trim(),
+            name: String(r.name || '').trim(),
+            sem:  String(r.sem  || '').trim(),
+            bd:   parseInt(r.bd)  || 0,
+            mk1:  parseInt(r.mk1) || 0,
+            mk2:  parseInt(r.mk2) || 0
+          });
+        });
+        updated.push('Courses2019 (' + courses2019.length + ' rekod)');
+      }
+
+      // Parse Students sheet
+      if (wb.SheetNames.includes('Students')) {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Students'], {defval:''});
+        students.length = 0;
+        rows.forEach(r => {
+          if (!r.id) return;
+          const coursesRaw = String(r.courses     || '').trim();
+          const lulusRaw   = String(r.kursusLulus || '').trim();
+          students.push({
+            id:          String(r.id).trim(),
+            name:        String(r.name    || '').trim(),
+            cls:         String(r.cls     || '').trim(),
+            cohort:      String(r.cohort  || '').trim(),
+            semKini:     String(r.semKini || '').trim(),
+            bd:          parseInt(r.bd)   || 0,
+            mk1:         parseInt(r.mk1)  || 0,
+            mk2:         parseInt(r.mk2)  || 0,
+            ctce:        parseInt(r.ctce) || 0,
+            courses:     coursesRaw ? coursesRaw.split(';').map(s=>s.trim()).filter(Boolean) : [],
+            kursusLulus: lulusRaw   ? lulusRaw.split(';').map(s=>s.trim()).filter(Boolean)   : []
+          });
+        });
+        updated.push('Students (' + students.length + ' rekod)');
+      }
+
+      if (updated.length === 0) {
+        statusEl.className = 'upload-status error';
+        statusEl.textContent = 'Tiada sheet yang dikenali (Courses2024 / Courses2019 / Students).';
+        return;
+      }
+
+      // Rebuild allCourses
+      allCourses.length = 0;
+      allCourses.push(...courses2024.map(c=>({...c, cohort:'2024'})));
+      allCourses.push(...courses2019.map(c=>({...c, cohort:'2019'})));
+
+      resetFilters();
+      statusEl.className = 'upload-status';
+      statusEl.textContent = '✓ Dikemaskini: ' + updated.join(', ');
+    } catch(err) {
+      statusEl.className = 'upload-status error';
+      statusEl.textContent = 'Ralat memproses Excel: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  // Reset input so same file can be re-uploaded
+  event.target.value = '';
+}
+
+// ============================================================
+// DOWNLOAD TEMPLATE EXCEL
+// ============================================================
+function downloadTemplate() {
+  const wb = XLSX.utils.book_new();
+
+  const c24 = [
+    ['code','name','sem','bd','mk1','mk2'],
+    ['DBM10163','Engineering Mathematics 1','SEM 1',0,3,1],
+    ['DET20213','Electrical Circuits 2','SEM 2',38,11,3]
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(c24), 'Courses2024');
+
+  const c19 = [
+    ['code','name','sem','bd','mk1','mk2'],
+    ['DBM10013','Engineering Mathematics 1','SEM 1',0,0,0],
+    ['DEG30013','Fundamental of Renewable Energy','SEM 5',16,1,0]
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(c19), 'Courses2019');
+
+  // courses = kursus bermasalah (pisah ";"), kursusLulus = kod kursus lulus (pisah ";")
+  const stu = [
+    ['id','name','cls','cohort','semKini','bd','mk1','mk2','ctce','courses','kursusLulus'],
+    ['05DEE25F2001','Nama Pelajar','DEE 2A','2024','SEM 3',0,1,0,0,'DBM10163 (MK1)','DBS10042;DEE10133;DUE10062']
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stu), 'Students');
+
+  XLSX.writeFile(wb, 'Template_JKE_PKS.xlsx');
+}
+
+// ============================================================
+// STUDENT MODAL — Pelan Pendaftaran Per Pelajar
+// ============================================================
+function openStudentModal(id) {
+  const s = students.find(x=>x.id===id);
+  if (!s) return;
+
+  document.getElementById('modalStudentName').textContent = s.name;
+  document.getElementById('modalStudentMeta').textContent =
+    `${s.id}  ·  ${s.cls}  ·  Kohort ${s.cohort}${s.semKini?' · '+s.semKini:''}`;
+
+  // Kursus bermasalah dari field courses[]
+  // format: "KOD (STATUS)" e.g. "DET20213 (BD)"
+  const issueMap = {};
+  (s.courses || []).forEach(c => {
+    const m = c.match(/^(\S+)\s+\((\w+)\)$/);
+    if (m) issueMap[m[1]] = m[2].toUpperCase();
+  });
+
+  // Kursus lulus dari field kursusLulus[]
+  const lulusSet = new Set(s.kursusLulus || []);
+
+  // Kursus semester semasa (dari pelan pengajian)
+  const cohortCourses = s.cohort==='2024' ? courses2024 : courses2019;
+  const semKiniCourses = s.semKini
+    ? cohortCourses.filter(c=>c.sem===s.semKini)
+    : [];
+
+  // Susun semua kursus pelan pengajian mengikut semester
+  const allSems = ['SEM 1','SEM 2','SEM 3','SEM 4','SEM 5','SEM 6'];
+
+  // Panel 1: Kursus Perlu Daftar Semula (ada isu)
+  const perluDaftar = Object.keys(issueMap).map(code => {
+    const info = cohortCourses.find(c=>c.code===code) || {name:code,sem:'—'};
+    return {code, name:info.name, sem:info.sem, status:issueMap[code]};
+  }).sort((a,b)=>allSems.indexOf(a.sem)-allSems.indexOf(b.sem));
+
+  // Panel 2: Kursus Semester Semasa yang belum selesai
+  const semKiniPending = semKiniCourses.filter(c=>!lulusSet.has(c.code)&&!issueMap[c.code]);
+
+  // Panel 3: Kursus Lulus
+  const lulusList = [...lulusSet].map(code=>{
+    const info = cohortCourses.find(c=>c.code===code) || {name:code,sem:'—'};
+    return {code, name:info.name, sem:info.sem};
+  }).sort((a,b)=>allSems.indexOf(a.sem)-allSems.indexOf(b.sem));
+
+  const pillStatus = st => {
+    if(st==='BD')  return `<span class="course-pill pill-bd">BD — Belum Daftar</span>`;
+    if(st==='MK1') return `<span class="course-pill pill-mk1">MK1 — Gagal Kali 1</span>`;
+    if(st==='MK2') return `<span class="course-pill pill-mk2">MK2 — Gagal Kali 2</span>`;
+    if(st==='CTCE')return `<span class="course-pill pill-ctce">CTCE — Credit Transfer</span>`;
+    return `<span class="course-pill pill-sem">${st}</span>`;
+  };
+
+  let html = '';
+
+  // ── Section: Perlu Daftar Semula ──
+  html += `<div class="modal-section">
+    <div class="modal-section-title">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Kursus Perlu Daftar / Ulang (${perluDaftar.length})
+    </div>`;
+  if (perluDaftar.length === 0) {
+    html += `<div class="no-course">Tiada kursus bermasalah. Pelajar ini selesai semua pendaftaran.</div>`;
+  } else {
+    html += `<table class="reg-table"><thead><tr><th>Kod</th><th>Nama Kursus</th><th>Semester</th><th>Status</th></tr></thead><tbody>`;
+    perluDaftar.forEach(c=>{
+      html += `<tr>
+        <td><code>${c.code}</code></td>
+        <td>${c.name}</td>
+        <td><span class="course-pill pill-sem" style="font-size:11px;padding:2px 7px">${c.sem}</span></td>
+        <td>${pillStatus(c.status)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  html += `</div>`;
+
+  // ── Section: Kursus Semester Semasa ──
+  if (s.semKini) {
+    html += `<div class="modal-section">
+      <div class="modal-section-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3b82d4" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Kursus ${s.semKini} — Belum Selesai (${semKiniPending.length})
+      </div>`;
+    if (semKiniPending.length === 0) {
+      html += `<div class="no-course">Semua kursus semester ini telah diselesaikan atau dalam proses.</div>`;
+    } else {
+      html += `<table class="reg-table"><thead><tr><th>Kod</th><th>Nama Kursus</th><th>Status</th></tr></thead><tbody>`;
+      semKiniPending.forEach(c=>{
+        html += `<tr>
+          <td><code>${c.code}</code></td>
+          <td>${c.name}</td>
+          <td><span class="course-pill pill-sem" style="font-size:11px;padding:2px 7px">Perlu Daftar</span></td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+    }
+    html += `</div>`;
+  }
+
+  // ── Section: Kursus Lulus ──
+  html += `<div class="modal-section">
+    <div class="modal-section-title">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Kursus Telah Lulus (${lulusList.length})
+    </div>`;
+  if (lulusList.length === 0) {
+    html += `<div class="no-course">Tiada rekod kursus lulus. Sila kemaskini data dalam Excel.</div>`;
+  } else {
+    html += `<div>`;
+    lulusList.forEach(c=>{
+      html += `<span class="course-pill pill-lulus" title="${c.sem}">${c.code}</span>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('studentModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('studentModal').classList.remove('open');
+}
+
+// ============================================================
+// EXPORT EXCEL — Student Analysis
+// ============================================================
+function exportStudentExcel() {
+  const q=(document.getElementById("studentSearch")||{value:""}).value.toLowerCase();
+  let fs=getFilteredStudents();
+  if(q) fs=fs.filter(s=>s.name.toLowerCase().includes(q)||s.id.toLowerCase().includes(q));
+  fs.sort((a,b)=>(b.mk2*10+b.mk1+b.bd)-(a.mk2*10+a.mk1+a.bd));
+
+  const rows = [['No','ID Pelajar','Nama','Kelas','Kohort','Sem Kini','BD','MK1','MK2','CTCE','Tahap Risiko','Kursus Bermasalah','Kursus Lulus']];
+  fs.forEach((s,i)=>{
+    const risk = s.mk2>0?'High Risk':s.mk1>=2||s.bd>=3?'Medium':s.mk1>0||s.bd>0?'Monitor':'OK';
+    rows.push([
+      i+1, s.id, s.name, s.cls, s.cohort, s.semKini||'',
+      s.bd, s.mk1, s.mk2, s.ctce, risk,
+      (s.courses||[]).join('; '),
+      (s.kursusLulus||[]).join('; ')
+    ]);
+  });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Students');
+  XLSX.writeFile(wb, 'Laporan_Pelajar_JKE.xlsx');
+  showToast('Export berjaya: Laporan_Pelajar_JKE.xlsx');
+}
+
+// ============================================================
+// EXPORT EXCEL — Kelas Analysis
+// ============================================================
+function exportKelasExcel() {
+  const kelasList = [...new Set(students.map(s=>s.cls))].sort();
+  const rows = [['No','Kelas','Kohort','Bil. Pelajar','BD','MK1','MK2','CTCE','Pelajar Berisiko','Tahap Risiko']];
+  kelasList.forEach((cls,i)=>{
+    const grp = students.filter(s=>s.cls===cls);
+    const cohort = grp[0].cohort;
+    const bd  = grp.reduce((a,s)=>a+s.bd,0);
+    const mk1 = grp.reduce((a,s)=>a+s.mk1,0);
+    const mk2 = grp.reduce((a,s)=>a+s.mk2,0);
+    const ctce= grp.reduce((a,s)=>a+s.ctce,0);
+    const berisiko = grp.filter(s=>s.mk2>0).length;
+    const risk = mk2>0?'Kritikal':mk1>3||bd>5?'Sederhana':'OK';
+    rows.push([i+1,cls,cohort,grp.length,bd,mk1,mk2,ctce,berisiko,risk]);
+  });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Kelas');
+  XLSX.writeFile(wb, 'Laporan_Kelas_JKE.xlsx');
+  showToast('Export berjaya: Laporan_Kelas_JKE.xlsx');
+}
+
+// ============================================================
+// LOCALSTORAGE — Simpan & Pulihkan Data
+// ============================================================
+function saveToLocalStorage() {
+  try {
+    localStorage.setItem('jke_courses2024', JSON.stringify(courses2024));
+    localStorage.setItem('jke_courses2019', JSON.stringify(courses2019));
+    localStorage.setItem('jke_students',    JSON.stringify(students));
+  } catch(e) {}
+}
+
+function loadFromLocalStorage() {
+  try {
+    const c24 = localStorage.getItem('jke_courses2024');
+    const c19 = localStorage.getItem('jke_courses2019');
+    const stu = localStorage.getItem('jke_students');
+    if (c24) { courses2024.length=0; courses2024.push(...JSON.parse(c24)); }
+    if (c19) { courses2019.length=0; courses2019.push(...JSON.parse(c19)); }
+    if (stu) { students.length=0;    students.push(...JSON.parse(stu)); }
+    if (c24||c19||stu) {
+      allCourses.length=0;
+      allCourses.push(...courses2024.map(c=>({...c,cohort:'2024'})));
+      allCourses.push(...courses2019.map(c=>({...c,cohort:'2019'})));
+      showToast('Data tempatan dipulihkan.');
+    }
+  } catch(e) {}
+}
+
+function showToast(msg, duration=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), duration);
+}
+
+// Init
+loadFromLocalStorage();
+renderAll();
+</script>
+</body>
+</html>
